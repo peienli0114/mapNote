@@ -1,0 +1,7 @@
+{
+  "name": "GeoMemo - 智慧地點備忘錄",
+  "description": "一款基於位置的智慧備忘錄應用。當您到達特定地點時自動提醒，並利用 Gemini AI 提供地點建議與資訊。",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
