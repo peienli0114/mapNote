@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Plus, List, Map as MapIcon, Locate, Bell, X, Sparkles, Navigation, Trash2, ExternalLink } from 'lucide-react';
+import { Plus, List, Map as MapIcon, Locate, Bell, X, Navigation, Trash2, ExternalLink } from 'lucide-react';
 import Map from './components/Map';
 import { Coordinates, Memo, COLORS, ViewMode } from './types';
 import { calculateDistance, getCurrentPosition } from './utils/geoUtils';
-import { getGeminiSuggestion } from './services/geminiService';
 
 function App() {
   // State
@@ -25,8 +24,6 @@ function App() {
   // Form State
   const [newMemoTitle, setNewMemoTitle] = useState('');
   const [newMemoContent, setNewMemoContent] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [aiUrls, setAiUrls] = useState<Array<{ uri: string; title: string }>>([]);
 
   // Audio Ref
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -98,7 +95,6 @@ function App() {
     setIsModalOpen(true);
     setNewMemoTitle('');
     setNewMemoContent('');
-    setAiUrls([]);
   };
 
   const handleAddMemo = () => {
@@ -113,7 +109,7 @@ function App() {
       isTriggered: false,
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       createdAt: Date.now(),
-      groundingUrls: aiUrls
+      groundingUrls: []
     };
 
     setMemos(prev => [...prev, newMemo]);
@@ -124,25 +120,6 @@ function App() {
   const handleDeleteMemo = (id: string) => {
     setMemos(prev => prev.filter(m => m.id !== id));
     if (activeMemo?.id === id) setActiveMemo(null);
-  };
-
-  const handleAISuggestion = async () => {
-    if (!selectedLocation) return;
-    
-    setIsGenerating(true);
-    try {
-      const result = await getGeminiSuggestion(selectedLocation, newMemoTitle || undefined);
-      setNewMemoContent(result.text);
-      setAiUrls(result.groundingUrls);
-      if (!newMemoTitle) {
-        setNewMemoTitle("新地點備忘錄");
-      }
-    } catch (error) {
-      console.error(error);
-      setNewMemoContent("無法取得 AI 建議");
-    } finally {
-      setIsGenerating(false);
-    }
   };
 
   const handleCenterUser = () => {
@@ -290,42 +267,13 @@ function App() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">
-                    內容 
-                    <button 
-                        onClick={handleAISuggestion}
-                        disabled={isGenerating}
-                        className="ml-2 text-xs bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white px-2 py-0.5 rounded-full inline-flex items-center gap-1 hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                        <Sparkles className="w-3 h-3" />
-                        {isGenerating ? 'Gemini 思考中...' : 'AI 建議'}
-                    </button>
-                  </label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">內容</label>
                   <textarea
                     value={newMemoContent}
                     onChange={(e) => setNewMemoContent(e.target.value)}
                     placeholder="備忘錄詳細內容..."
                     className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-32 resize-none transition-all"
                   />
-                  {aiUrls.length > 0 && (
-                    <div className="mt-2 text-xs">
-                        <p className="text-slate-500 mb-1">參考來源：</p>
-                        <div className="flex flex-wrap gap-2">
-                        {aiUrls.map((link, idx) => (
-                            <a 
-                                key={idx} 
-                                href={link.uri} 
-                                target="_blank" 
-                                rel="noreferrer"
-                                className="flex items-center gap-1 text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded"
-                            >
-                                <ExternalLink className="w-3 h-3" />
-                                {link.title}
-                            </a>
-                        ))}
-                        </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex gap-3 pt-2">
